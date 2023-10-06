@@ -2,8 +2,10 @@ import { useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import {useHttp} from '../../hooks/http.hook';
 import { useDispatch, useSelector } from 'react-redux';
-import { heroCreated } from "../../actions";
+import store from "../../store";
 
+import { heroCreated } from "../heroesList/heroesSlice";
+import { selectAll } from "../heroesFilters/filtersSlice";
 // Задача для этого компонента:
 // Реализовать создание нового героя с введенными данными. Он должен попадать
 // в общее состояние и отображаться в списке + фильтроваться
@@ -20,7 +22,9 @@ const HeroesAddForm = () => {
     const [heroDescr, setHeroDescr] = useState('');
     const [heroElement, setHeroElement] = useState('');
 
-    const {filters, filtersLoadingStatus} = useSelector(state => state);
+    const {filtersLoadingStatus} = useSelector(state => state.filters);
+    const filters = selectAll(store.getState());
+
     const {request} = useHttp();
     const dispatch = useDispatch();
 
@@ -45,21 +49,22 @@ const HeroesAddForm = () => {
         setHeroElement('');
     }
 
-    const renderOptions = (arr, status) => {
+    const renderOptions = (filters, status) => {
         if (status === "loading") {
             return <option>Загрузка элементов</option>
         } else if (status === "error") {
             return <option>Ошибка загрузки</option>
         }
 
-        return arr.filter(item => item.name !== 'all').map((item) => {
-            return (
-                <option key={item.name} value={item.name}>{item.label}</option>
-            )
-        })
-    }
+        if (filters && filters.length > 0 ) {
+            return filters.map(({name, label}) => {
+                // eslint-disable-next-line
+                if (name === 'all')  return;
 
-    const options = renderOptions(filters, filtersLoadingStatus);
+                return <option key={name} value={name}>{label}</option>
+            })
+        }
+    }
 
     return (
         <form onSubmit={handleSubmit} className="border p-4 shadow-lg rounded">
@@ -99,7 +104,7 @@ const HeroesAddForm = () => {
                     value={heroElement}
                     onChange={(e) => setHeroElement(e.target.value)}>
                     <option >Я владею элементом...</option>
-                    {options}
+                    {renderOptions(filters, filtersLoadingStatus)}
                 </select>
             </div>
 

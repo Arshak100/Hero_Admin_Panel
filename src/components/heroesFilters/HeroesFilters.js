@@ -1,43 +1,21 @@
-import { useHttp } from "../../hooks/http.hook";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from 'uuid';
 import classNames from "classnames";
+import store from '../../store';
 
-import { filtersFetching, filtersFetched, filtersFetchingError, filterSelect, filteringHeroesList } from "../../actions";
+import { filterSelect, fetchFilters, selectAll } from "./filtersSlice";
 import Spinner from "../spinner/Spinner";
-// Задача для этого компонента:
-// Фильтры должны формироваться на основании загруженных данных
-// Фильтры должны отображать только нужных героев при выборе
-// Активный фильтр имеет класс active
-// Изменять json-файл для удобства МОЖНО!
-// Представьте, что вы попросили бэкенд-разработчика об этом
 
 const HeroesFilters = () => {
-    const {heroes, filters, selectedFilter, filtersLoadingStatus} = useSelector(state => state);
+    const {selectedFilter, filtersLoadingStatus} = useSelector(state => state.filters);
+    const filters = selectAll(store.getState());
     const dispatch = useDispatch();
-    const {request} = useHttp();
 
     useEffect(() => {
-        dispatch(filtersFetching());
-        request("http://localhost:3001/filters")
-            .then(filters => dispatch(filtersFetched(filters)))
-            .catch(() => dispatch(filtersFetchingError));
-     
+        dispatch(fetchFilters());
         // eslint-disable-next-line    
-    }, [request]);
-
-    const selectFilter = (e) => {
-        filters.forEach((filter) => {
-            if (filter.name === e.target.id) {
-                dispatch(filterSelect(filter.name));
-                const newHeroesList = heroes.filter((hero) => {
-                    return hero.element === filter.name;
-                });
-                dispatch(filteringHeroesList(newHeroesList));
-            }
-        });
-    }
+    }, []);
 
     if (filtersLoadingStatus === 'loading') {
         return <Spinner/>;
@@ -56,7 +34,7 @@ const HeroesFilters = () => {
 
             return (
                 <button 
-                    onClick={selectFilter} 
+                    onClick={() => dispatch(filterSelect(name))} 
                     key={uuidv4()} 
                     id={name} 
                     className={btnClass}>{label}</button>
@@ -64,6 +42,7 @@ const HeroesFilters = () => {
         });
         
     } 
+
 
     const buttons = renderFilters(filters);
 
