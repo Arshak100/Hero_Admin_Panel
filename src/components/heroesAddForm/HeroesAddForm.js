@@ -26,6 +26,7 @@ const HeroesAddForm = () => {
     const filters = selectAll(store.getState());
 
     const {request} = useHttp();
+    
     const dispatch = useDispatch();
 
     const handleSubmit = (e) => {
